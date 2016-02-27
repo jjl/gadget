@@ -1,0 +1,5 @@
+.#*
+*~
+/.nrepl-*
+/target
+pom.xml
