@@ -1,12 +1,15 @@
 (set-env!
   :project 'irresponsible/gadget
-  :version "0.0.1"
+  :version "0.1.0"
   :resource-paths #{"src"}
   :source-paths #{"src"}
+  :description "Introspection helpers, useful for repo work"
+  :url "https://github.com/irresponsible/gadget"
+  :scm {:url "https://github.com/irresponsible/gadget.git"}
+  :license {"MIT" "https://en.wikipedia.org/MIT_License"}
   :dependencies '[[org.clojure/clojure "1.8.0"                  :scope "provided"]
-                  [org.clojure/tools.reader "1.0.0-alpha3"] ;; should probably just copy-paste the fn
-                  [classlojure "0.6.6" :exclusions [org.clojure/clojure]]
-                  ;; [automat     "0.2.0-alpha2"]
+                  [irresponsible/overload "0.1.0"]
+                  [irresponsible/unscrew  "0.1.1"]
                   [adzerk/boot-test "1.1.0"                     :scope "test"]
                   ;; [org.clojure/clojurescript "1.7.228"          :scope "test"]
                   ;; [adzerk/boot-cljs "1.7.228-1"                 :scope "test"]
@@ -27,16 +30,26 @@
          ;; '[pandeiro.boot-http :as boot-http])
          
 (task-options!
-  pom {:project (get-env :project)
-       :version (get-env :version)
-       :description "Some introspection helpers that are useful for REPL work"
-       :url "https://github.com/irresponsible/frost"
-       :scm {:url "https://github.com/irresponsible/frost.git"}
-       :license {"MIT" "https://en.wikipedia.org/MIT_License"}}
+  pom {:url         (get-env :url)
+       :scm         (get-env :scm)
+       :project     (get-env :project)
+       :version     (get-env :version)
+       :license     (get-env :license)
+       :description (get-env :description)
+       :developers  (get-env :developers)}
+  push {:tag            true
+        :ensure-branch  "master"
+        :ensure-release true
+        :ensure-clean   true
+        :gpg-sign       true
+        :repo-map [["clojars" {:url "https://clojars.org/repo/"}]]}
   target  {:dir #{"target"}})
 
+(deftask testing []
+  (set-env! :source-paths #(conj % "test")))
+
 (deftask test-clj []
-  (set-env! :source-paths #(conj % "test"))
+  (testing)
   (comp (target) (speak) (boot-test/test)))
 
 ;; (deftask test-cljs []
@@ -44,8 +57,8 @@
 ;;   (comp (target) (speak) (boot-cljs/cljs) (boot-cljs-test/test-cljs)))
   
 (deftask test []
-  (set-env! :source-paths #(conj % "test"))
-  (comp (target) (speak) (boot-test/test)))
+  (testing)
+  (comp (target) (speak) (javac) (boot-test/test)))
 
 (deftask autotest []
   (comp (watch) (test)))

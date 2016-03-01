@@ -1,23 +1,19 @@
 # inspector gadget
 
-A tool for introspecting java classes and clojure namespaces
+A tool for introspecting java classes.
 
 Handy for figuring out what you can do with a *thing* at a repl.
-
-Written during a period without proper internet access.
-
-Yes, it uses eval for now. Caveat emptor. Buyer beware.
 
 ## Usage
 
 Scenario: you move flat and it will take two weeks to get internet. Disaster!
 
-Gadget to the rescue!
+Gadget to the rescue. Sadly I had to write it while I didn't have much internet.
 
 ```clojure
-(require '[irresponsible.gadget :as g])
+(require '[irresponsible.gadget :refer [wtf?]])
 
-(-> java.lang.Byte g/inspect (g/summary {:shorten? true}) print)
+(wtf? java.lang.Byte)
 ;; output:
 ;; (deftype+ java.lang.Byte
 ;;   j.l.Comparable j.l.Number
@@ -46,8 +42,26 @@ Gadget to the rescue!
 ```
 ## Options
 
-`:shorten?` - shorten common namespaces (e.g. java.lang -> j.l)
-`:private?` - include private and protected members in the output?
+`wtf?` can take a second argument, a map of options:
+
+* `:shorten?` - shorten common namespaces (e.g. java.lang -> j.l)
+* `:private?` - include private and protected members in the output?
+
+## API
+
+There is an API, but until I've finished writing documental, you'll have to read the doc comments
+
+`gadget`, `inspect` and `summary` are the only functions you'll need for repl work.
+
+## Plans
+
+At some point we'll probably want to parse java so we can get comments.
+
+There are no plans to extend this analysis to clojure
+
+## Contributions
+
+Pull requests and issues welcome, even if it's just doc fixes. We don't bite.
 
 ## License
 

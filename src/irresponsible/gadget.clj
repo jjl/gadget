@@ -1,35 +1,61 @@
 (ns irresponsible.gadget
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
-            [irresponsible.gadget :as g]
-            [irresponsible.gadget.util :as u]
-            [classlojure.core :as c])
+            [irresponsible.gadget.util :as u])
   (:import  [clojure.reflect Constructor Method Field]
             [clojure.lang PersistentVector PersistentArrayMap PersistentHashMap]
-            [java.lang Class ClassLoader])
+            [irresponsible.gadget.util PrimitiveInspector ArrayInspector])
   (:refer-clojure :exclude [bases methods name type]))
 
-(defn indent [t]
+(defn- indent
+  "Indents the given token:
+   args: [string]
+   returns: string"
+  [t]
   (str "  " t))
 
-(defn partial* [f & ps1]
+(defn partial*
+  "Like partial, but appends the provided arguemnts to the END of the received
+   arguments in the return function
+   args: [f & ps]
+   returns: function"
+  [f & ps1]
   (fn [& ps2]
     (apply f (concat ps2 ps1))))
 
 (defprotocol Summary
   (summary [insp] [insp opts]
-    "Returns a short summary string"))
+    "Returns a short summary string
+     args: [insp] [insp opts]
+       opts: map of options. supported keys:
+         :shorten?  when true, shorten common namespaces
+         :private?  when true, show private and protected members
+     returns: string"))
 
 (defprotocol Inspectable
-  (inspect [insp] [insp classloader]
-    "Inspect the given thing"))
+  (inspect [insp]
+    "Inspect the given thing, returning some sort of Inspector
+     args: [thing]"))
 
-(defrecord PrimitiveInspector
-  [type])
+(defn gadget
+  "Given a thing, creates a string describing it.
+   Opts are passed to `summary`
+   args: [thing] [thing opts]
+   returns: string"
+  ([thing]
+   (gadget thing {:shorten? true}))
+  ([thing opts]
+   (-> thing inspect (summary opts))))
 
-(defrecord ArrayInspector
-  [type])
-
+(defn wtf?
+  "Like gadget, but prints its output to the terminal
+   args: [thing] [thing opts]
+   returns: nil"
+  ([thing]
+   (print (gadget thing)))
+  ([thing opts]
+   (print (gadget thing opts))))
+  
 (defrecord ConstructorInspector
   [name visibility params])
 
@@ -42,52 +68,59 @@
 (defrecord ClassInspector
   [bases constructors methods fields name static? flags])
 
-(defn load-symbol [s]
-  (letfn [(f [[t v :as r]]
-            (case t
-              :symbol    (if (var? v) @v v)
-              :primitive (map->PrimitiveInspector {:type v})))]
-    (let [[t v :as r] (u/load-symbol s)]
-      (if (= t :array)
-        (map->ArrayInspector {:type (f v)})
-        (f r)))))
-
 (def name
-  "Gets the name of the inspected thing"
+  "Gets the name of the inspected thing
+   args: [inspector]
+   returns: string or nil (not an inspector)"
   :name)
 
 (def visibility
-  "one of: :public, :private, :protected, nil"
+  "one of: :public, :private, :protected, nil (not an inspector)
+   args: [inspector]
+   returns: keyword"
   :visibility)
 
 (def public?
-  "true if public"
+  "true if public
+   args: [inspector]
+   returns: boolean"
   (comp (partial = :public)
         visibility))
 
 (def protected?
-  "true if protected"
+  "true if protected
+   args: [inspector]
+   returns: boolean"
+
   (comp (partial = :protected)
         visibility))
 
 (def private?
-  "true if private"
+  "true if private
+   args: [inspector]
+   returns: boolean"
   (comp (partial = :private)
         visibility))
 
 (def static?
-  "Returns true if static"
+  "Returns true if static
+   args: [inspector]
+   returns: boolean"
   :static?)
 
 (def dynamic?
-  "Returns true if not static"
+  "Returns true if not static
+   args: [inspector]
+   returns: boolean"
   (complement static?))
 
 (defn bases
   "Returns a vector of ClassInspector for each base of the class
-   Basic types are returned as symbols"
+   Basic types are returned as symbols
+   args: [inspector]
+   returns: [ClassInspector]"
   [insp]
-  (mapv (comp inspect load-symbol) (:bases insp)))
+  (mapv (comp inspect u/load-class) (:bases insp)))
 
 (defn constructors
   "Returns the constructors of the class
@@ -117,15 +150,23 @@
    (->> insp :methods (u/filter-vals filter-fn))))
  
 (defn params
-  "Get the vector of param types the invocable is invoked with"
+  "Get the vector of param types (as symbols) the invocable is invoked with
+   args: [inspector]
+   returns: [symbol]"
   [insp]
-  (->> insp :params (mapv load-symbol)))
+  (->> insp :params (mapv u/load-param)))
 
 (def returns
-  "Get the return type of the invocable"
-  (comp load-symbol :returns))
+  "Get the return type of the invocable
+   args: [inspector]
+   returns: symbol"
+  (comp u/load-param :returns))
 
-(def type "Get the type of the field" :type)
+(def type
+  "Get the type of the field
+   args: [inspector]
+   returns: boolean"
+  :type)
 
 (extend-type PersistentVector Summary
   (summary
@@ -157,7 +198,7 @@
 
 (extend-type ArrayInspector Summary
   (summary
-    ([^PrimitiveInspector prim]
+    ([^ArrayInspector prim]
      (summary prim {}))
     ([{:keys [type]} opts]
      (str (summary type opts) "<>"))))
@@ -174,12 +215,12 @@
        (u/str-concat [(if in-class? "(" "(fn ")
                       (when (and v (not= :public v))
                         ["^" v " "])
-                      (u/alias-name name) ". " params ")"])))))
+                      (u/classname) ". " params ")"])))))
 
 (defn -summarise-constructors [cs {:keys [shorten? private?] :as opts}]
   (when-let [cs (seq (if private? cs (filter public? cs)))]
     (str (->> cs
-              (into [(str "(" (u/alias-name (:name (first cs))) ".")]
+              (into [(str "(" (u/classname (:name (first cs))) ".")]
                     (map  (partial* u/get-ctor-params opts)))
               (str/join " ")
               indent)
@@ -203,7 +244,7 @@
 (defn -summarise-method-group [name vis returns {:keys [shorten? private?] :as opts} ms]
   (when-let [ms (seq (if private? ms (filter public? ms)))]
     (let [first-line (-> ["(" (when (and vis (not= :public vis)) ["^" vis " "])
-                          "^" (u/alias-name returns) " ." name]
+                          "^" (u/classname returns) " ." name]
                          u/str-concat)]
       (-> (->> ms
                (into [first-line] (map (partial* u/get-params opts)))
@@ -213,7 +254,7 @@
 (defn -summarise-methods [ms {:keys [shorten? private?] :as opts}]
   (when-let [ms (-> ms seq vals flatten)]
     (->> (if private? ms (filter public? ms))
-         (u/sorted-group-by (juxt u/score-visibility :name :returns))
+         (u/sorted-group-by :name (juxt u/score-visibility :name (comp count :returns)))
          (reduce-kv (fn [acc _ ms]
                       (when (seq ms)
                         (let [{:keys [visibility name returns]} (first ms)]
@@ -238,12 +279,25 @@
                       "^" type " .-"  name
                       (when in-class? ")")])))))
 
-(defn -summarise-fields [fs {:keys [shorten? private?] :as opts}]
+(defn -summarise-fields
+  "[internal]
+   Turns a field map into a sequence of field summaries suitable for embedding
+   in class output
+   args: [fs opts]
+     opts: map of options (:shorten? :private?)
+   returns: [String]"
+  [fs {:keys [shorten? private?] :as opts}]
   (when-let [fs (-> fs seq vals)]
     (->> (if private? fs (filter public? fs))
          (map (comp indent (partial* summary (assoc opts :in-class? true)))))))
 
-(defn -summarise-bases [bs {:keys [shorten?] :as opts}]
+(defn -summarise-bases
+  "[internal]
+   Turns a vector of symbols into a list of bases suitable for embedding in class output
+   args: [fs opts]
+     opts: map of options (:shorten? :private?)
+   returns: String"
+  [bs {:keys [shorten?] :as opts}]
   (->> bs
        (mapv (comp (partial* u/maybe-shorten shorten?)))
        (str/join " ")
@@ -266,9 +320,7 @@
 
 (extend-type Constructor Inspectable
   (inspect
-    ([^Constructor c]
-     (inspect c c/base-classloader))
-    ([{:keys [flags parameter-types] :as c} ^ClassLoader cl]
+    ([{:keys [flags parameter-types] :as c}]
      (map->ConstructorInspector
       {:name (:name c)  :visibility (u/visibility c)
        :flags flags     :params parameter-types}))))
@@ -276,18 +328,14 @@
 
 (extend-type Method Inspectable
   (inspect
-    ([^Method m]
-     (inspect m c/base-classloader))
-    ([{:keys [name flags return-type parameter-types] :as m} ^ClassLoader cl]
+    ([{:keys [name flags return-type parameter-types] :as m}]
       (map->MethodInspector {:name  name          :visibility (u/visibility m)
                             :flags flags          :params parameter-types
                             :returns return-type  :static? (u/has-flag? m :static)}))))
 
 (extend-type Field Inspectable
   (inspect
-    ([^Field f]
-     (inspect f c/base-classloader))
-    ([{:keys [flags type] :as f} ^ClassLoader cl]
+    ([{:keys [flags type] :as f}]
      (map->FieldInspector {:flags flags    :visibility (u/visibility f)  :type type
                            :name (:name f) :static?    (u/has-flag? f :static)}))))
 
