@@ -59,7 +59,7 @@
 (deftask autotest []
   (comp (watch) (test)))
 
-(deftask make-release-jar []
+(deftask make-jar []
   (comp (target) (pom) (jar)))
 
 (deftask travis []
