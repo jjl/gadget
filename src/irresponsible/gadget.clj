@@ -47,14 +47,11 @@
   ([thing opts]
    (-> thing inspect (summary opts))))
 
-(defn wtf?
+(def wtf?
   "Like gadget, but prints its output to the terminal
    args: [thing] [thing opts]
    returns: nil"
-  ([thing]
-   (print (gadget thing)))
-  ([thing opts]
-   (print (gadget thing opts))))
+  (comp print gadget))
   
 (defrecord ConstructorInspector
   [name visibility params])
@@ -313,7 +310,7 @@
            cs (-> insp constructors (-summarise-constructors opts))
            ms (-> insp methods      (-summarise-methods      opts))
            fs (-> insp fields       (-summarise-fields       opts))]
-       (str (str/join "\n" (filter #(and (not (nil? %)) (not (= "" %)))
+       (str (str/join "\n" (remove #(or (nil? %) (= "" %))
                                    (flatten [(str "(deftype+ " name)
                                              bs cs ms fs])))
             ")")))))
@@ -329,9 +326,9 @@
 (extend-type Method Inspectable
   (inspect
     ([{:keys [name flags return-type parameter-types] :as m}]
-      (map->MethodInspector {:name  name          :visibility (u/visibility m)
-                            :flags flags          :params parameter-types
-                            :returns return-type  :static? (u/has-flag? m :static)}))))
+      (map->MethodInspector {:name  name           :visibility (u/visibility m)
+                             :flags flags          :params parameter-types
+                             :returns return-type  :static? (u/has-flag? m :static)}))))
 
 (extend-type Field Inspectable
   (inspect
@@ -348,7 +345,7 @@
           cs   (->> ConstructorInspector mems
                     (into (u/sorted-set-by (comp count :params))))
           ms   (->> MethodInspector mems
-                    (u/sorted-group-by :name))
+                    (u/sorted-group-by :name #(compare (:name %) (:name %2))))
           fs   (->> FieldInspector mems
                     (into (sorted-map) (map (fn [v] [(:name v) v]))))]
       (map->ClassInspector {:constructors cs  :methods ms  :fields fs

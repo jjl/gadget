@@ -1,0 +1,15 @@
+language: clojure
+sudo: false
+script: ./boot travis
+branches:
+  only:
+    - master
+jdk:
+  - oraclejdk8
+# travis does not support any of these (yet):
+#  - oraclejdk9
+#  - openjdk8
+#  - openjdk9
+install:
+  - curl -fsSLo boot https://github.com/boot-clj/boot-bin/releases/download/latest/boot.sh
+  - chmod 755 boot

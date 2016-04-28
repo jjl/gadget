@@ -7,18 +7,13 @@
   :url "https://github.com/irresponsible/gadget"
   :scm {:url "https://github.com/irresponsible/gadget.git"}
   :license {"MIT" "https://en.wikipedia.org/MIT_License"}
-  :dependencies '[[org.clojure/clojure "1.8.0"                  :scope "provided"]
-                  [irresponsible/overload "0.1.0"]
-                  [irresponsible/unscrew  "0.1.1"]
-                  [adzerk/boot-test "1.1.0"                     :scope "test"]
+  :dependencies '[[org.clojure/clojure "1.8.0"      :scope "provided"]
+                  [irresponsible/overload  "0.1.0"]
+                  [irresponsible/unscrew   "0.1.2"]
+                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
+                  [adzerk/boot-test        "1.1.0"  :scope "test"]
                   ;; [org.clojure/clojurescript "1.7.228"          :scope "test"]
                   ;; [adzerk/boot-cljs "1.7.228-1"                 :scope "test"]
-                  ;; [adzerk/boot-cljs-repl       "0.3.0"          :scope "test"]
-                  ;; [adzerk/boot-reload          "0.4.5"          :scope "test"]
-                  ;; [pandeiro/boot-http          "0.7.1-SNAPSHOT" :scope "test"]
-                  ;; [com.cemerick/piggieback     "0.2.1"          :scope "test"]
-                  ;; [weasel                      "0.7.0"          :scope "test"]
-                  [org.clojure/tools.nrepl     "0.2.12"         :scope "test"]
                   ;; [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
                   ])
 
@@ -46,6 +41,7 @@
   target  {:dir #{"target"}})
 
 (deftask testing []
+  (set-env! :resource-paths #(conj % "test"))
   (set-env! :source-paths #(conj % "test")))
 
 (deftask test-clj []
@@ -65,3 +61,7 @@
 
 (deftask make-release-jar []
   (comp (target) (pom) (jar)))
+
+(deftask travis []
+  (testing)
+  (boot-test/test))

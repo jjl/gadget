@@ -251,4 +251,3 @@
         (has-flag? :protected t) :protected
         (has-flag? :private   t) :private
         :otherwise               nil))
-

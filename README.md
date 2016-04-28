@@ -1,14 +1,23 @@
+The irresponsible clojure guild present...
+
 # inspector gadget
 
 A tool for introspecting java classes.
 
 Handy for figuring out what you can do with a *thing* at a repl.
 
+![logo](https://github.com/irresponsible/tv100/blob/master/logo.png)
+
 ## Usage
 
 Scenario: you move flat and it will take two weeks to get internet. Disaster!
 
 Gadget to the rescue. Sadly I had to write it while I didn't have much internet.
+
+[![Clojars Project](http://clojars.org/irresponsible/gadget/latest-version.svg)](http://clojars.org/irresponsible/gadget)
+
+[![Travis CI](https://travis-ci.org/irresponsible/gadget.svg?branch=master)](https://travis-ci.org/irresponsible/gadget)
+
 
 ```clojure
 (require '[irresponsible.gadget :refer [wtf?]])
