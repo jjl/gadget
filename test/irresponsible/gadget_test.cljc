@@ -1,7 +1,7 @@
 (ns irresponsible.gadget-test
   (:require [clojure.test :refer [deftest is]]
             [irresponsible.gadget :as g])
-  (:import [irresponsible.gadget ConstructorInspector MethodInspector FieldInspector ClassInspector])
+  (:import [irresponsible.gadget.inspector ConstructorInspector MethodInspector FieldInspector ClassInspector])
   (:refer-clojure :exclude [name bases methods type]))
 
 (defn id [& args]

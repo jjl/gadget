@@ -8,7 +8,7 @@
   :scm {:url "https://github.com/irresponsible/gadget.git"}
   :license {"MIT" "https://en.wikipedia.org/MIT_License"}
   :dependencies '[[org.clojure/clojure "1.8.0"      :scope "provided"]
-                  [irresponsible/overload  "0.1.0"]
+                  [irresponsible/overload  "0.2.0"]
                   [irresponsible/unscrew   "0.1.2"]
                   [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                   [adzerk/boot-test        "1.1.0"  :scope "test"]

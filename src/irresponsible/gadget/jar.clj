@@ -1,5 +1,6 @@
 (ns irresponsible.gadget.jar
   (:require [clojure.string :as s]
+            [clojure.main :refer [demunge]]
             [irresponsible.unscrew :as u]))
 
 (defn normalise-class
@@ -19,7 +20,7 @@
   (-> path
        (s/replace #"\.clj[cs]?$" "")
        (s/replace #"/" ".")
-       (s/replace #"_" "-")))
+       demunge))
 
 (defn namespaces-in-jar
   "Returns a sequence of file paths in the jar that look like clojure(script) files

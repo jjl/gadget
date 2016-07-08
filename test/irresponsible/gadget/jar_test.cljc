@@ -8,8 +8,10 @@
 (deftest normalisation
   (let [classes-in  ["foo/bar.class"]
         classes-out ["foo.bar"]
-        clojure-in  ["foo/bar_baz.clj" "foo/bar_baz.cljs" "foo/bar_baz.cljc"]
-        clojure-out ["foo.bar-baz" "foo.bar-baz" "foo.bar-baz"]]
+        clojure-in  ["foo/bar_baz_QMARK__BANG__.clj"
+                     "foo/bar_baz_QMARK__BANG__.cljs"
+                     "foo/bar_baz_QMARK__BANG__.cljc"]
+        clojure-out ["foo.bar-baz?!-" "foo.bar-baz?!-" "foo.bar-baz?!-"]]
     (is (= classes-out (mapv j/normalise-class   classes-in)))
     (is (= clojure-out (mapv j/normalise-namespace clojure-in)))))
 

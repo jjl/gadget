@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [irresponsible.overload :refer [overload]])
   (:import  [java.lang StringBuilder]
+            [java.util Arrays]
             [clojure.reflect Constructor Method Field])
   (:refer-clojure :exclude [sorted-set-by]))
 
@@ -251,3 +252,35 @@
         (has-flag? :protected t) :protected
         (has-flag? :private   t) :private
         :otherwise               nil))
+
+(defn indent
+  "Indents the given token:
+   args: [spaces-count string]
+   returns: string"
+  [c t]
+  (let [^chars a (char-array c)]
+    (Arrays/fill a \space)
+    (-> a String. (str t))))
+
+(defn indent-lines
+  "Indents the given token:
+   args: [spaces-count string]
+   returns: string"
+  [c t]
+  (->> t str/split-lines (map (partial indent c)) (partial str/join "\n")))
+
+(defn partial*
+  "Like partial, but appends the provided arguemnts to the END of the received
+   arguments in the return function
+   args: [f & ps]
+   returns: function"
+  [f & ps1]
+  (fn [& ps2]
+    (apply f (concat ps2 ps1))))
+
+(defn reexport [ns sym]
+  (cond (not (symbol? sym))   (throw (ex-info "reexport takes a symbol!" {}))
+        (not (namespace sym)) (throw (ex-info "reexport takes a namespaced symbol" {}))
+        :else
+        (let [v (resolve sym)]
+          (intern ns (-> sym name symbol (with-meta (meta v))) @v))))
