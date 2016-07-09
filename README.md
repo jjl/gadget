@@ -20,34 +20,55 @@ Gadget to the rescue. Sadly I had to write it while I didn't have much internet.
 
 
 ```clojure
-(require '[irresponsible.gadget :refer [wtf?]])
+boot.user> (require '[irresponsible.gadget :refer [wtf?]])
 
-(wtf? java.lang.Byte)
-;; output:
-;; (deftype+ java.lang.Byte
-;;   j.l.Comparable j.l.Number
-;;   (Byte. [String])
-;;   (^byte .byteValue [self])
-;;   (^int .compare [self byte byte])
-;;   (^int .compareTo [self j.l.Object] [self Byte])
-;;   (^Byte .decode [self String])
-;;   (^double .doubleValue [self])
-;;   (^boolean .equals [self j.l.Object])
-;;   (^float .floatValue [self])
-;;   (^int .hashCode [self byte] [self])
-;;   (^int .intValue [self])
-;;   (^long .longValue [self])
-;;   (^byte .parseByte [self String] [self String int])
-;;   (^short .shortValue [self])
-;;   (^String .toString [self] [self byte])
-;;   (^int .toUnsignedInt [self byte])
-;;   (^long .toUnsignedLong [self byte])
-;;   (^Byte .valueOf [self byte] [self String] [self String int])
-;;   (^int .-BYTES)
-;;   (^byte .-MAX_VALUE)
-;;   (^byte .-MIN_VALUE)
-;;   (^int .-SIZE)
-;;   (^j.l.Class .-TYPE))
+boot.user> (wtf? [])
+(deftype++ clojure.lang.PersistentVector
+  :bases [c.l.APersistentVector c.l.IEditableCollection c.l.IKVReduce c.l.IObj c.l.IReduce]
+  ;; methods
+  (^PersistentVector$Node .access$000 [self j.u.concurrent.atomic.AtomicReference int c.l.PersistentVector$Node])
+  (^PersistentVector .adopt [self j.l.Object<>])
+  (^Object<> .arrayFor [self int])
+  (^ITransientCollection .asTransient [self])
+  (^PersistentVector$TransientVector .asTransient [self])
+  (^IPersistentVector .assocN [self int j.l.Object])
+  (^PersistentVector .assocN [self int j.l.Object])
+  (^IChunkedSeq .chunkedSeq [self])
+  (^IPersistentCollection .cons [self j.l.Object])
+  (^IPersistentVector .cons [self j.l.Object])
+  (^PersistentVector .cons [self j.l.Object])
+  (^int .count [self])
+  (^PersistentVector .create [self c.l.IReduceInit]
+                             [self c.l.ISeq]
+                             [self j.l.Iterable]
+                             [self j.l.Object<>]
+                             [self j.u.List])
+  (^:private ^PersistentVector$Node .doAssoc [self int c.l.PersistentVector$Node int j.l.Object])
+  (^IPersistentCollection .empty [self])
+  (^Iterator .iterator [self])
+  (^Object .kvreduce [self c.l.IFn j.l.Object])
+  (^IPersistentMap .meta [self])
+  (^:private ^PersistentVector$Node .newPath [self j.u.concurrent.atomic.AtomicReference int c.l.PersistentVector$Node])
+  (^Object .nth [self int]
+                [self int j.l.Object])
+  (^IPersistentStack .pop [self])
+  (^PersistentVector .pop [self])
+  (^:private ^PersistentVector$Node .popTail [self int c.l.PersistentVector$Node])
+  (^:private ^PersistentVector$Node .pushTail [self int c.l.PersistentVector$Node c.l.PersistentVector$Node])
+  (^Iterator .rangedIterator [self int int])
+  (^Object .reduce [self c.l.IFn]
+                   [self c.l.IFn j.l.Object])
+  (^ISeq .seq [self])
+  (^int .tailoff [self])
+  (^IObj .withMeta [self c.l.IPersistentMap])
+  (^PersistentVector .withMeta [self c.l.IPersistentMap])
+  ;; fields
+  (^PersistentVector .-EMPTY)
+  (^c.l.PersistentVector$Node .-EMPTY_NODE)
+  (^c.l.PersistentVector$Node .-root)
+  (^int .-shift)
+  (^j.l.Object<> .-tail))
+nil
 ```
 ## Options
 
