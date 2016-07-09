@@ -284,3 +284,7 @@
         :else
         (let [v (resolve sym)]
           (intern ns (-> sym name symbol (with-meta (meta v))) @v))))
+
+(defn compare-with [f]
+  (fn [a b]
+    (compare (f a) (f b))))    

@@ -142,19 +142,32 @@
      (map->FieldInspector {:flags flags    :visibility (u/visibility f)  :type type
                            :name (:name f) :static?    (u/has-flag? f :static)}))))
 
+(def compare-params (u/compare-with :params))
+
+(defn -ctors [cs]
+  (into (u/sorted-set-by compare-params) cs))
+
+(defn -methods [ms]
+  (->> (group-by :name ms)
+       (into (sorted-map)
+             (map (fn [[k v]] [k (into [] (sort compare-params v))])))))
+
+(defn -fields [fs]
+  (into (sorted-map) (map (fn [v] [(:name v) v])) fs))
+
 (extend-type Class Inspectable
   (inspect [c]
     (let [{:keys [flags bases] :as c2} (r/reflect c)
           bs   (into (sorted-set) bases)
           mems (->> c2 :members (map inspect) (group-by class))
-          ;; If these confuse you, they're map lookups in mems
-          cs   (->> ConstructorInspector mems
-                    (into (u/sorted-set-by #(compare (:params %) (:params %2)))))
-          ms   (->> MethodInspector mems
-                    (u/sorted-group-by :name #(compare (:name %) (:name %2))))
-          fs   (->> FieldInspector mems
-                    (into (sorted-map) (map (fn [v] [(:name v) v]))))]
+          cs   (-ctors   (mems ConstructorInspector))
+          ms   (-methods (mems MethodInspector))
+          fs   (-fields  (mems FieldInspector))]
       (map->ClassInspector {:constructors cs  :methods ms  :fields fs
                             :name (symbol (.getName c)) 
                             :bases bs  :flags flags
                             :static? (u/has-flag? c2 :static)}))))
+
+(extend-type Object Inspectable
+  (inspect [c]
+    (inspect (class c))))

@@ -29,5 +29,5 @@
   "Like gadget, but prints its output to the terminal
    args: [thing] [thing opts]
    returns: nil"
-  (comp print gadget))
+  (comp println gadget))
   

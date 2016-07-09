@@ -90,29 +90,34 @@
                       (when (:static? insp) "^:static ")
                       "^" returns " ." name " " params ")"])))))
 
-(defn -summarise-method-group
-  "A method group shares the same name and return type"
-  [name vis returns {:keys [shorten? private?] :as opts} ms]
-  (when-let [ms (seq (if private? ms (filter i/public? ms)))]
-    (let [first-line (-> ["(" (when (and vis (not= :public vis)) ["^" vis " "])
-                          "^" (u/classname returns) " ." name]
-                         u/str-concat)]
-      (-> (->> ms
-               (into [first-line] (map (partial* u/get-params opts)))
-               (str/join " "))
-          (str ")")))))
+(defn -subgroup
+  ""
+  [ms]
+  (let [rets (group-by :returns ms)]
+    (map rets (sort (keys rets)))))
 
-(defn -summarise-methods [ms {:keys [shorten? private?] :as opts}]
-  (when-let [ms (-> ms seq vals flatten)]
-    (->> (if private? ms (filter i/public? ms))
-         (u/sorted-group-by :name (juxt u/score-visibility :name (comp count :returns)))
-         (reduce-kv (fn [acc _ ms]
-                      (when (seq ms)
-                        (let [{:keys [visibility name returns]} (first ms)]
-                          (->> (-summarise-method-group name visibility returns opts ms)
-                               (u/indent 2)
-                               (conj acc)))))
-                    ["  ;; methods"]))))
+(defn -summarise-subgroup [{:keys [private? shorten] :as opts} s]
+  (let [s2 (cond->> s private? (filter i/public?))]
+    (when (seq s2)
+      (let [[{:keys [visibility returns name] :as s1} & ss] s2
+            vis (if (and visibility (not= :public visibility)) (str "^" visibility " ") "")
+            rets (u/classname returns)
+            ann  (str "  (" vis  "^" rets " ." name " ")
+            pad  (.length ann)
+            [o1 & os] (map #(u/get-params % opts) s2)
+            line-1 (str ann o1)
+            os2 (map (partial u/indent pad) os)]
+        (str (str/join "\n" (cons line-1 os2)) ")")))))
+
+(defn -summarise-group
+  "A method group shares the same name"
+  [opts ms]
+  (->> (-subgroup ms) (keep (partial -summarise-subgroup opts))))
+
+(defn -summarise-methods [ms opts]
+  (->> (vals ms)
+       (keep (partial -summarise-group opts))
+       (into ["  ;; methods"])))
 
 (extend-type FieldInspector Summary
   (summary
@@ -150,19 +155,17 @@
      opts: map of options (:shorten? :private?)
    returns: String"
   [bs {:keys [shorten?] :as opts}]
-  (->> 
-   (->> bs
-        (mapv (comp (partial* u/maybe-shorten shorten?)))
-        pr-str
-        (str "  :bases "))))
+  (->> bs
+       (mapv (comp (partial* u/maybe-shorten shorten?)))
+       pr-str
+       (str "  :bases ")))
 
 (extend-type ClassInspector Summary
   (summary
     ([^ClassInspector insp]
      (summary insp {}))
-    ([{:keys [name] :as insp}
-      {:keys [shorten?] :or [false] :as opts}]
-     (let [bs (-> insp :bases       (-summarise-bases        opts))
+    ([{:keys [name] :as insp} opts]
+     (let [bs (-> insp :bases        (-summarise-bases        opts))
            cs (-> insp :constructors (-summarise-constructors opts))
            ms (-> insp :methods      (-summarise-methods      opts))
            fs (-> insp :fields       (-summarise-fields       opts))]
