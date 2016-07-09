@@ -1,6 +1,6 @@
 (set-env!
   :project 'irresponsible/gadget
-  :version "0.1.0"
+  :version "0.2.0"
   :resource-paths #{"src"}
   :source-paths #{"src"}
   :description "Introspection helpers, useful for repo work"
